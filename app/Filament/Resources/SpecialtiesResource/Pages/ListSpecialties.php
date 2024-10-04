@@ -9,11 +9,15 @@ use Filament\Resources\Pages\ListRecords;
 class ListSpecialties extends ListRecords
 {
     protected static string $resource = SpecialtiesResource::class;
+    protected static ?string $title = 'Especialidades';
+    
+   
 
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+            ->label('Crear especialidad'),
         ];
     }
 }

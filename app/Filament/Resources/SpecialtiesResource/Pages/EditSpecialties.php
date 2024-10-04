@@ -9,6 +9,7 @@ use Filament\Resources\Pages\EditRecord;
 class EditSpecialties extends EditRecord
 {
     protected static string $resource = SpecialtiesResource::class;
+    protected static ?string $title = 'Editar especialidad';
 
     protected function getHeaderActions(): array
     {
@@ -16,4 +17,5 @@ class EditSpecialties extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+   
 }
