@@ -34,21 +34,21 @@ class SpecialtiesResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
+                Forms\Components\TextInput::make('name')->label('Nombre')
                     ->required()
                     ->alpha()
+                    ->unique('specialties', 'name', ignoreRecord: true) // Verifica la unicidad ignorando el registro actual en modo edición
                     ->maxLength(30)->validationMessages([
                         'alpha'=>'El campo nombre solo debe tener letras',
-                        // 'unique'=>'Ya existe una especialidad con ese nombre',
+                        'unique'=>'Ya existe una especialidad con ese nombre',
                     ]),
-                Forms\Components\Toggle::make('status')->default(true)
-                    ->required(),
+                Forms\Components\Toggle::make('status')->label('Estado')->default(true),
             ]);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table 
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()->label('Nombre'),
@@ -73,8 +73,8 @@ class SpecialtiesResource extends Resource
                         ]),
                         Filter::make('created_at')
                         ->form([
-                            DatePicker::make('created_from'),
-                            DatePicker::make('created_until'),
+                            DatePicker::make('created_from')->label('Desde:'),
+                            DatePicker::make('created_until')->label('Hasta:'),
                         ])
                         ->query(function (Builder $query, array $data): Builder {
                             return $query
@@ -88,31 +88,22 @@ class SpecialtiesResource extends Resource
                                 );
                         })
             ])
+            ->defaultSort('id', 'desc')
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Action::make('Desactivar')->icon('heroicon-m-trash')->color('danger')
-                ->requiresConfirmation()
-                ->action(function (Specialties $record){
-                    $record->status= false;
-                    $record->save();
-                })->visible(fn (Specialties $record):bool=>$record->status),
+                // Action::make('Desactivar')->icon('heroicon-m-trash')->color('danger')
+                // ->requiresConfirmation()
+                // ->action(function (Specialties $record){
+                //     $record->status= false;
+                //     $record->save();
+                // })->visible(fn (Specialties $record):bool=>$record->status),
                 
                
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),
-                    // Action::make('Activar')->icon('heroicon-m-power')->color('success')
-                    // ->requiresConfirmation()
-                    // ->action(function (Specialties $record){
-                    //     $record->status= true;
-                    //     $record->save();
-                    // }),   Action::make('Desactivar')->icon('heroicon-m-trash')->color('danger')
-                    // ->requiresConfirmation()
-                    // ->action(function (Specialties $record){
-                    //     $record->status= false;
-                    //     $record->save();
-                    // }),
+             
                 ]),
             ]);
     }
