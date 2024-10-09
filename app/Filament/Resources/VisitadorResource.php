@@ -15,6 +15,11 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Forms\Components\DatePicker;
+
 
 class VisitadorResource extends Resource
 {
@@ -32,12 +37,17 @@ class VisitadorResource extends Resource
                     ->maxLength(255),
                 Forms\Components\TextInput::make('correo')
                     ->required()
-                    ->maxLength(255),
+                    ->unique(ignoreRecord: true)
+                    ->email()
+                    ->maxLength(255) ->validationMessages([
+                        'unique' => 'Este correo ya existe en el sistema',
+                    ]),
                 Forms\Components\TextInput::make('celular')
                     ->required()
+                    ->numeric()
                     ->maxLength(255),
                 Forms\Components\Toggle::make('estado')
-                    ->required(),
+                    ->required()->default(true),
             ]);
     }
 
@@ -52,8 +62,8 @@ class VisitadorResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('celular')
                     ->searchable(),
-                Tables\Columns\IconColumn::make('estado')
-                    ->boolean(),
+                    Tables\Columns\ToggleColumn::make('estado')
+                    ->label('Estado'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -63,8 +73,31 @@ class VisitadorResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('id', 'desc')
             ->filters([
-                //
+                SelectFilter::make('estado')->label('Estado')
+                ->multiple()
+                    ->options([
+                        '1' => 'Activo',
+                        '0' => 'Inactivo',
+                    
+                    ]),
+                    Filter::make('created_at')
+                    ->form([
+                        DatePicker::make('created_from')->label('Desde:'),
+                        DatePicker::make('created_until')->label('Hasta:'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['created_from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                            )
+                            ->when(
+                                $data['created_until'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                            );
+                    })
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -72,7 +105,7 @@ class VisitadorResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
