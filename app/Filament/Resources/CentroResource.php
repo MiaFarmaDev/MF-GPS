@@ -20,8 +20,9 @@ use Filament\Forms\Components\DatePicker;
 class CentroResource extends Resource
 {
     protected static ?string $model = Centro::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?int $navigationSort=2;
+    protected static ?string $navigationGroup='Recursos Médicos';
+    protected static ?string $navigationIcon = 'heroicon-o-building-office';
 
     public static function form(Form $form): Form
     {

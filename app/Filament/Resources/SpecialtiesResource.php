@@ -21,12 +21,13 @@ use Filament\Forms\Components\DatePicker;
 
 class SpecialtiesResource extends Resource
 {  
-   
+    protected static ?string $navigationGroup='Recursos Médicos';
+    protected static ?int $navigationSort=1;
     protected static ?string $model = Specialties::class;
   
     protected static ?string $heading='Especialidadessss';
     protected static ?string $navigationLabel='Especialidades';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-inbox-stack';
    
  
 
