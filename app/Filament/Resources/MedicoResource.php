@@ -13,14 +13,17 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Actions\Action;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Components\DatePicker;
-use App\Filament\Clusters\GestionMedica;
-
+use Filament\Forms\Components\FileUpload;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\MedicosImport;
+use Illuminate\Support\Facades\Storage;
 class MedicoResource extends Resource
 {
     protected static ?string $navigationGroup='Recursos Médicos';
@@ -82,9 +85,9 @@ class MedicoResource extends Resource
                 Tables\Columns\TextColumn::make('centro.nombre')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('especialidad.name')
-                    ->sortable(),
+                    ->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('visitador.nombre')
-                    ->sortable(),
+                    ->sortable()->searchable(),
                 Tables\Columns\ToggleColumn::make('estado'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -126,8 +129,35 @@ class MedicoResource extends Resource
                             );
                     })
             ])
+            ->headerActions([
+                Action::make('import')
+                    ->label('Importar')
+                    ->icon('heroicon-o-users')
+                    ->form([
+                        FileUpload::make('file')
+                            ->label('Selecciona un archivo Excel')
+                            ->disk('local') // Usa el almacenamiento local
+                            ->directory('uploads/excels') // Carpeta donde se guardará el archivo
+                            ->acceptedFileTypes(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']) // Solo archivos Excel
+                            ->required(),
+                    ])
+                    ->action(function (array $data) {
+                        // El archivo ha sido guardado en 'uploads/excels' en el disco 'local'
+                        $filePath = Storage::disk('local')->path($data['file']);
+
+                        // Lógica de importación utilizando el archivo guardado
+                        Excel::import(new MedicosImport, $filePath);
+
+                        // Notificación de éxito
+                        Filament::notify('success', 'Datos importados correctamente.');
+
+                        // Eliminar el archivo después de la importación, si lo deseas
+                        Storage::disk('local')->delete($data['file']);
+                    }),
+            ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -151,4 +181,10 @@ class MedicoResource extends Resource
             'edit' => Pages\EditMedico::route('/{record}/edit'),
         ];
     }
+     // Función para manejar la importación de datos
+     protected function importData($file)
+     {
+         // Usa la librería Excel para importar los datos
+         Excel::import(new MedicosImport, $file);
+     }
 }

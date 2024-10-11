@@ -18,6 +18,10 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Contracts\Support\Htmlable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\EspecialidadImport;
+use Illuminate\Support\Facades\Storage;
 
 class SpecialtiesResource extends Resource
 {  
@@ -90,14 +94,40 @@ class SpecialtiesResource extends Resource
                         })
             ])
             ->defaultSort('id', 'desc')
+            ->headerActions([
+                Action::make('import')
+                    ->label('Importar')
+                    ->icon('heroicon-o-users')
+                    ->form([
+                        FileUpload::make('file')
+                            ->label('Selecciona un archivo Excel')
+                            ->disk('local') // Usa el almacenamiento local
+                            ->directory('uploads/excels') // Carpeta donde se guardará el archivo
+                            ->acceptedFileTypes(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']) // Solo archivos Excel
+                            ->required()
+                            ->validationMessages(
+                                [
+                                    'required'=>'Debe seleciconar un archivo .xlsx'
+                                ]
+                            ),
+                    ])
+                    ->action(function (array $data) {
+                        // El archivo ha sido guardado en 'uploads/excels' en el disco 'local'
+                        $filePath = Storage::disk('local')->path($data['file']);
+
+                        // Lógica de importación utilizando el archivo guardado
+                        Excel::import(new EspecialidadImport, $filePath);
+
+                        // Notificación de éxito
+                        Filament::notify('success', 'Datos importados correctamente.');
+
+                        // Eliminar el archivo después de la importación, si lo deseas
+                        Storage::disk('local')->delete($data['file']);
+                    }),
+            ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                // Action::make('Desactivar')->icon('heroicon-m-trash')->color('danger')
-                // ->requiresConfirmation()
-                // ->action(function (Specialties $record){
-                //     $record->status= false;
-                //     $record->save();
-                // })->visible(fn (Specialties $record):bool=>$record->status),
+    
                 
                
             ])
