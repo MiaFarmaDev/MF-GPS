@@ -36,7 +36,7 @@ class VisitadorResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('nombre')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)->dehydrateStateUsing(fn($state) => strtoupper($state)),
                 Forms\Components\TextInput::make('correo')
                     ->required()
                     ->unique(ignoreRecord: true)

@@ -23,6 +23,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\MedicosImport;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Storage;
 class MedicoResource extends Resource
 {
@@ -139,19 +140,43 @@ class MedicoResource extends Resource
                             ->disk('local') // Usa el almacenamiento local
                             ->directory('uploads/excels') // Carpeta donde se guardará el archivo
                             ->acceptedFileTypes(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']) // Solo archivos Excel
-                            ->required(),
+                            ->required()
+                            ->validationMessages(
+                                [
+                                    'required'=>'Debe seleciconar un archivo .xlsx'
+                                ]
+                            ),
                     ])
                     ->action(function (array $data) {
                         // El archivo ha sido guardado en 'uploads/excels' en el disco 'local'
                         $filePath = Storage::disk('local')->path($data['file']);
 
-                        // Lógica de importación utilizando el archivo guardado
-                        Excel::import(new MedicosImport, $filePath);
+                         // Crear una instancia de la importación
+                        $import = new MedicosImport;
+                         // Realizar la importación
+                        Excel::import($import, $filePath);
+                         // Obtener la cantidad de filas importadas
+                            $importedRows = $import->getRowCount();
 
-                        // Notificación de éxito
-                        Filament::notify('success', 'Datos importados correctamente.');
-
-                        // Eliminar el archivo después de la importación, si lo deseas
+                         // Mensaje condicional según la cantidad de registros importados
+                            if ($importedRows > 0) {
+                                // Notificación de éxito con la cantidad de datos importados
+                                Notification::make()
+                                    ->title('Datos importados correctamente.')
+                                    ->body("Se importaron {$importedRows} registros.")
+                                    ->icon('heroicon-o-document-text')
+                                    ->iconColor('success')
+                                    ->send();
+                            } else {
+                                // Notificación indicando que no se importaron registros
+                                Notification::make()
+                                    ->title('No se importaron registros.')
+                                    ->body('No se encontraron nuevos registros para importar.')
+                                    ->icon('heroicon-o-exclamation-circle')
+                                    ->iconColor('warning')
+                                    ->send();
+                            }
+                        // Eliminar el archivo después de la importación
                         Storage::disk('local')->delete($data['file']);
                     }),
             ])

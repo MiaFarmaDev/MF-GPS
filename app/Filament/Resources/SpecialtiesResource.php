@@ -21,6 +21,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\EspecialidadImport;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Storage;
 
 class SpecialtiesResource extends Resource
@@ -36,20 +37,21 @@ class SpecialtiesResource extends Resource
  
 
     public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')->label('Nombre')
-                    ->required()
-                    ->alpha()
-                    ->unique('specialties', 'name', ignoreRecord: true) // Verifica la unicidad ignorando el registro actual en modo edición
-                    ->maxLength(30)->validationMessages([
-                        'alpha'=>'El campo nombre solo debe tener letras',
-                        'unique'=>'Ya existe una especialidad con ese nombre',
-                    ]),
-                Forms\Components\Toggle::make('status')->label('Estado')->default(true),
-            ]);
-    }
+{
+    return $form
+        ->schema([
+            Forms\Components\TextInput::make('name')->label('Nombre')
+                ->required()
+                ->unique('specialties', 'name', ignoreRecord: true) // Verifica la unicidad ignorando el registro actual en modo edición
+                ->maxLength(30)
+                ->validationMessages([
+                    // 'alpha' => 'El campo nombre solo debe tener letras',
+                    'unique' => 'Ya existe una especialidad con ese nombre',
+                ])
+                ->dehydrateStateUsing(fn($state) => strtoupper($state)), // Convierte a mayúsculas
+            Forms\Components\Toggle::make('status')->label('Estado')->default(true),
+        ]);
+}
 
     public static function table(Table $table): Table
     {
@@ -116,12 +118,23 @@ class SpecialtiesResource extends Resource
                         $filePath = Storage::disk('local')->path($data['file']);
 
                         // Lógica de importación utilizando el archivo guardado
-                        Excel::import(new EspecialidadImport, $filePath);
+                        // Excel::import(new EspecialidadImport, $filePath);
+                         // Crear una instancia de la importación
+                        $import = new EspecialidadImport;
+                         // Realizar la importación
+                        Excel::import($import, $filePath);
+                         // Obtener la cantidad de filas importadas
+                            $importedRows = $import->getRowCount();
 
                         // Notificación de éxito
-                        Filament::notify('success', 'Datos importados correctamente.');
+                        Notification::make()
+                        ->title('Datos importados correctamente.')
+                        ->body("Se importaron {$importedRows} registros.")
+                        ->icon('heroicon-o-document-text')
+                        ->iconColor('success')
+                        ->send();
 
-                        // Eliminar el archivo después de la importación, si lo deseas
+                        // Eliminar el archivo después de la importación
                         Storage::disk('local')->delete($data['file']);
                     }),
             ])
