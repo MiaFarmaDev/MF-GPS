@@ -9,5 +9,5 @@ class Visita extends Model
 {
     use HasFactory;
     protected $fillable=['medico_id','visitador_id','latitud',
-    'longitude','producto','observacion'.'estado'];
+    'longitude','producto','observacion','estado'];
 }

@@ -14,6 +14,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Livewire\VisitLocation;
+use Filament\Forms\Components\Livewire;
 
 class VisitaResource extends Resource
 {
@@ -21,24 +23,26 @@ class VisitaResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    
+
     public static function form(Form $form): Form
     {
         return $form->schema([
+            
             Forms\Components\TextInput::make('medico_id')
                 ->required()
                 ->numeric(),
             Forms\Components\TextInput::make('visitador_id')
                 ->required()
                 ->numeric(),
-            Forms\Components\TextInput::make('latitud')
+                Forms\Components\TextInput::make('latitud')
                 ->numeric()
-                ->extraAttributes(['id' => 'latitude']),
+                ->reactive(), 
             Forms\Components\TextInput::make('longitude')
-                ->numeric()
-                ->extraAttributes(['id' => 'longitude']),
+                ->numeric()->reactive(),
             Forms\Components\TextInput::make('producto')
                 ->maxLength(255)
-                ->default(null),
+                 ->reactive(),
             Forms\Components\TextInput::make('observacion')
                 ->maxLength(255)
                 ->default(null),
@@ -46,15 +50,10 @@ class VisitaResource extends Resource
                 ->required()
                 ->maxLength(255),
     
-            Actions::make([
-                Action::make('verificarUbicacion')
-                    ->label('Verificar ubicación')
-                    ->color('primary')
-                    ->extraAttributes([
-                        'id' => 'verificar-ubicacion',  // Solo el ID, sin 'onclick'
-                    ]),
-            ]),
-        ]);
+                // Forms\Components\View::make('livewire.visit-location'),
+                Livewire::make(VisitLocation::class),
+
+                     ]);
     }
     
 
